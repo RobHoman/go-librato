@@ -11,6 +11,24 @@ type AlertsService struct {
 	client *Client
 }
 
+// Status represents a response containing firing and cleared Librato Alerts
+type Status struct {
+	Firing  []FiringAlert  `json:"firing"`
+	Cleared []ClearedAlert `json:"cleared"`
+}
+
+// FiringAlert represents a firing Librato Alert
+type FiringAlert struct {
+	ID      *uint `json:"id"`
+	FiredAt *int  `json:"fired_at"`
+}
+
+// ClearedAlert represents a cleared Librato Alert
+type ClearedAlert struct {
+	ID        *uint `json:"id"`
+	ClearedAt *int  `json:"cleared_at"`
+}
+
 // Alert represents a Librato Alert.
 type Alert struct {
 	Name       *string          `json:"name"`
@@ -53,6 +71,26 @@ type AlertConditionTagSet struct {
 // AlertAttributes represents the attributes of an alert.
 type AlertAttributes struct {
 	RunbookURL *string `json:"runbook_url,omitempty"`
+}
+
+// Status check for firing and cleared alerts
+//
+// Librato API docs: https://www.librato.com/docs/api/#list-all-alerts
+func (a *AlertsService) Status() (*Status, *http.Response, error) {
+	urlStr := fmt.Sprintf("alerts/status")
+
+	req, err := a.client.NewRequest("GET", urlStr, nil)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	var alertStatus Status
+	resp, err := a.client.Do(req, &alertStatus)
+	if err != nil {
+		return nil, resp, err
+	}
+
+	return &alertStatus, resp, err
 }
 
 // Get an alert by ID
